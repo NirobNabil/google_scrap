@@ -1,0 +1,15 @@
+{
+  "name": "just-eat_scrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chromium": "^3.0.2",
+    "puppeteer": "^8.0.0"
+  }
+}
