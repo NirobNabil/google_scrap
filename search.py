@@ -2,6 +2,7 @@ import urllib
 import requests
 import time
 from bs4 import BeautifulSoup
+import json
 
 # desktop user-agent
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
@@ -10,12 +11,14 @@ MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) App
 
 headers = {"user-agent": USER_AGENT}
 
-qstrings = ["Spice of asia", "Zeera 41 Calne Road Lyneham, Chippenham, SN15 4PR"]
+qnames = ["Spice of asia", "Zeera 41"]
+qaddr = ["", "Calne Road Lyneham, Chippenham, SN15 4PR"]
 n_errors = []
 d_errors = []
-res = []
+res = {}
 
-for query in qstrings:
+for i in range(len(qnames)):
+    query = qnames[i] + qaddr[i]
     query = query.replace(' ', '+')
     URL = f"https://google.com/search?client=firefox-b-d&q={query}"
     resp = requests.get(URL, headers=headers)
@@ -32,12 +35,24 @@ for query in qstrings:
     else:
         n_errors.append(query)
         
-    res.append(data)
+    res[qnames[i]] = data
     time.sleep(2)
-    
-f = open("./data.txt", "a")
-f.write(str(res))
-f.close()
+
+res_s = json.dumps(res, ensure_ascii=False, indent=2)
+f_ne = open("./n_error.txt", "w");
+f_de = open("./d_error.txt", "w");
+f_d = open("./data.txt", "w")
+f_ne.write(str(n_errors))
+f_de.write(str(d_errors))
+f_d.write(str(res_s))
+f_ne.close()
+f_de.close()
+f_d.close()
+
+
+
+
+
 #attr_name = "data-local-attribute"
 #data-attrs = ["kc:/collection/knowledge_panels/has_phone:phone", "kc:/location/location:address"]
 #data_attrs_val = {'address': "d3adr", 'phone': "d3ph"}
