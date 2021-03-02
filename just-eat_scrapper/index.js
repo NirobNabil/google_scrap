@@ -21,6 +21,7 @@ async function scrape(list_url) {
                 return nodes[i].href;
             }));
         })
+        page.close();
         return nodes;
     }
 
@@ -34,17 +35,47 @@ async function scrape(list_url) {
                 address: document.querySelector('.c-restaurant-header-address-content').textContent.trim(),
             }
         });
+        page.close();
         return d;
     }
+    
+    //search google with restaurant_name+restaurant_address
+    async function scrape3(qstring) {
+        const page = await browser.newPage();
+        await page.goto("https://www.google.com");
+        await page.type('input.gLFyf.gsfi', qstring);
+        page.keyboard.press('Enter');
+        await page.waitForNavigation({
+            waitUntil: 'networkidle0',
+        });
+        const data = await page.evaluate( ()=> {
+            return {
+                'phone': document.querySelectorAll('.LrzXr')[1]?.textContent,
+                'website': document.querySelectorAll('.QqG1Sd')[0]?.children[0]?.href
+            }
+        })
+        page.close();
+        return data;
+    }
+    
 
-    individual_urls = (await scrape1(list_url)).slice(0,5);
+    individual_urls = (await scrape1(list_url)).slice(0,5);  //processing only 5 restaurants. comment this line in production
+    // individual_urls = (await scrape1(list_url));   //uncomment this line to process every retaurnt
     var data = [];
     for(let i=0; i<individual_urls.length; i++) {
-        data.push(await scrape2(individual_urls[i]));
+        let d = await scrape2(individual_urls[i]);
+        d = {
+            ...d,
+            ...await scrape3(d.name+' '+d.address)
+        }
+        data.push(d);
     }
+
     browser.close();
     return data;
 }
+
+
 
 urls = [
     "https://www.just-eat.co.uk/area/b13-birmingham",
@@ -53,7 +84,9 @@ urls = [
 Promise.all(urls.map( async (url) => {
     const data = await scrape(url);
     console.log(data);
-    return {url: data};
+    return {[url]: data};
 })).then( (data) => {
-    fs.writeFileSync("./data.json", JSON.stringify(data, null, '\t'))
+    fs.writeFileSync("./data.json", JSON.stringify(data, null, '\t')) //remove '/t' to disable pretty print
 });
+
+

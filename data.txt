@@ -1,10 +1,4 @@
 {
-  "Spice of asia": [
-    "111 Chippenham Rd, Lyneham, Chippenham SN15 4PB, যুক্তরাজ্য",
-    "+44 1249 892266"
-  ],
-  "Zeera 41": [
-    "41 Calne Rd, Lyneham, Chippenham SN15 4PR, যুক্তরাজ্য",
-    "+44 1249 890890"
-  ]
+  "Spice of asia": {},
+  "Zeera 41": {}
 }
