@@ -12,7 +12,7 @@ MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) App
 headers = {"user-agent": USER_AGENT}
 
 qnames = ["Spice of asia", "Zeera 41"]
-qaddr = ["", "Calne Road Lyneham, Chippenham, SN15 4PR"]
+qaddr = ["111 Chippenham Rd, Lyneham, Chippenham SN15 4PB, United Kingdom", "Calne Road Lyneham, Chippenham, SN15 4PR"]
 n_errors = []
 d_errors = []
 res = {}
