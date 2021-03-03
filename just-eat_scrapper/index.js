@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { mainModule } = require('process');
 
 async function scrape(list_url) {
 
@@ -59,9 +60,14 @@ async function scrape(list_url) {
     }
     
 
-    individual_urls = (await scrape1(list_url)).slice(0,5);  //processing only 5 restaurants. comment this line in production
-    // individual_urls = (await scrape1(list_url));   //uncomment this line to process every retaurnt
+    // individual_urls = (await scrape1(list_url)).slice(0,5);  //processing only 5 restaurants. comment this line in production
+    var individual_urls=[];
+    for(let i=0; i<5; i++) {
+        let individual_urls_t = (await scrape1(list_url));   //uncomment this line to process every retaurnt
+        if(individual_urls_t.length > individual_urls) individual_urls = individual_urls_t;    
+    }
     var data = [];
+    console.log(individual_urls.length);
     for(let i=0; i<individual_urls.length; i++) {
         let d = await scrape2(individual_urls[i]);
         d = {
@@ -79,13 +85,20 @@ async function scrape(list_url) {
 
 urls = [
     "https://www.just-eat.co.uk/area/b13-birmingham",
+    "https://www.just-eat.co.uk/area/ab21-aberdeen",
 ]
 
-Promise.all(urls.map( async (url) => {
-    const data = await scrape(url);
-    console.log(data);
-    return {[url]: data};
-})).then( (data) => {
+async function main() {
+    result = [];
+    for(let i=0; i<urls.length; i++) {
+        const data = await scrape(urls[i]);
+        console.log(data);
+        data.map( (d) => result.push(d) );
+    }
+    return result;
+}
+
+main().then( (data) => {
     fs.writeFileSync("./data.json", JSON.stringify(data, null, '\t')) //remove '/t' to disable pretty print
 });
 
