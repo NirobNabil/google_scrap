@@ -3,12 +3,26 @@ const fs = require('fs');
 const { mainModule } = require('process');
 
 async function scrape(list_url) {
-
-    const browser = await puppeteer.launch({headless: false});
     //restaurant list parse
     async function scrape1 (url) {
-        const page = await browser.newPage();
-        await page.goto(url)
+        const browser2 = await puppeteer.launch({headless: false});
+        const page = await browser2.newPage();
+
+        await page.setRequestInterception(true);
+
+        page.on('request', (req) => {
+            if(req.resourceType() == 'texttrack' || req.resourceType() == 'websocket' || req.resourceType() == 'fetch' || req.resourceType() == 'xhr' || req.resourceType() == 'other' || req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+                req.abort();
+            }
+            else {
+                req.continue();
+            }
+        });
+
+
+
+        await page.goto(url);
+
         const nodes = await page.evaluate( async (sleep) => {
             window.sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             const classname = '.c-listing-item-link';
@@ -23,83 +37,74 @@ async function scrape(list_url) {
             }));
         })
         page.close();
+        browser2.close();
         return nodes;
     }
 
-    //individual restaurant website parser
-    async function scrape2 (url) {
-        const page = await browser.newPage();
-        await page.goto(url);
-        const d = await page.evaluate(() => {
-            return {
-                name: document.querySelector('.c-mediaElement-heading').textContent.trim(),
-                address: document.querySelector('.c-restaurant-header-address-content').textContent.trim(),
-            }
-        });
-        page.close();
-        return d;
-    }
-    
-    //search google with restaurant_name+restaurant_address
-    async function scrape3(qstring) {
-        const page = await browser.newPage();
-        await page.goto("https://www.google.com");
-        await page.type('input.gLFyf.gsfi', qstring);
-        page.keyboard.press('Enter');
-        await page.waitForNavigation({
-            waitUntil: 'networkidle0',
-        });
-        const data = await page.evaluate( ()=> {
-            return {
-                'phone': document.querySelectorAll('.LrzXr')[1]?.textContent,
-                'website': document.querySelectorAll('.QqG1Sd')[0]?.children[0]?.href
-            }
-        })
-        page.close();
-        return data;
-    }
-    
-
     // individual_urls = (await scrape1(list_url)).slice(0,5);  //processing only 5 restaurants. comment this line in production
-    var individual_urls=[];
-    for(let i=0; i<5; i++) {
-        let individual_urls_t = (await scrape1(list_url));   //uncomment this line to process every retaurnt
-        if(individual_urls_t.length > individual_urls) individual_urls = individual_urls_t;    
-    }
-    var data = [];
-    console.log(individual_urls.length);
-    for(let i=0; i<individual_urls.length; i++) {
-        let d = await scrape2(individual_urls[i]);
-        d = {
-            ...d,
-            ...await scrape3(d.name+' '+d.address)
+    var total_urls = [];
+    for(let i=0; i<list_url.length; i++) {
+        var individual_urls=[];
+        for(let j=0; j<1; j++) {
+            let individual_urls_t = (await scrape1(list_url[i]));   //uncomment this line to process every retaurnt
+            if(individual_urls_t.length > individual_urls.length) individual_urls = individual_urls_t;    
         }
-        data.push(d);
+        total_urls.push(...individual_urls);
     }
+    console.log(total_urls.length);
 
-    browser.close();
-    return data;
+    var fs = require('fs');
+
+    var file = fs.createWriteStream('url_list.txt');
+    file.on('error', function(err) { /* error handling */ });
+    total_urls.forEach(function(v) { file.write(v + '\n'); });
+    file.end();
+
+    return;
 }
 
-
-
 urls = [
-    "https://www.just-eat.co.uk/area/b13-birmingham",
-    "https://www.just-eat.co.uk/area/ab21-aberdeen",
+    "https://www.just-eat.co.uk/area/ab10-aberdeen",
+    "https://www.just-eat.co.uk/area/ab11-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab12-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab13-milltimber",
+    // "https://www.just-eat.co.uk/area/ab14-peterculter",
+    // "https://www.just-eat.co.uk/area/ab15-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab16-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab21-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab22-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab23-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab24-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab25-aberdeen",
+    // "https://www.just-eat.co.uk/area/ab30-laurencekirk",
+    // "https://www.just-eat.co.uk/area/ab31-banchory",
+    // "https://www.just-eat.co.uk/area/ab32-westhill",
+    // "https://www.just-eat.co.uk/area/ab33-alford",
+    // "https://www.just-eat.co.uk/area/ab34-aboyne",
+    // "https://www.just-eat.co.uk/area/ab35-ballater",
+    // "https://www.just-eat.co.uk/area/ab36-strathdon",
+    // "https://www.just-eat.co.uk/area/ab37-ballindalloch",
+    // "https://www.just-eat.co.uk/area/ab38-aberlour",
+    // "https://www.just-eat.co.uk/area/ab39-stonehaven",
+    // "https://www.just-eat.co.uk/area/ab41-ellon",
+    // "https://www.just-eat.co.uk/area/ab42-peterhead",
+    // "https://www.just-eat.co.uk/area/ab43-fraserburgh",
+    // "https://www.just-eat.co.uk/area/ab44-macduff",
+    // "https://www.just-eat.co.uk/area/ab45-banff",
+    // "https://www.just-eat.co.uk/area/ab51-inverurie",
+    // "https://www.just-eat.co.uk/area/ab52-insch",
+    // "https://www.just-eat.co.uk/area/ab53-turriff",
+    // "https://www.just-eat.co.uk/area/ab54-huntly",
+    // "https://www.just-eat.co.uk/area/ab55-keith",
+    // "https://www.just-eat.co.uk/area/ab56-buckie",
+    // "https://www.just-eat.co.uk/area/ab99-aberdeen",
+
+    // "https://www.just-eat.co.uk/area/ab10-aberdeen"
 ]
 
 async function main() {
-    result = [];
-    for(let i=0; i<urls.length; i++) {
-        const data = await scrape(urls[i]);
-        console.log(data);
-        data.map( (d) => result.push(d) );
-    }
-    return result;
+    scrape(urls);
+    return;
 }
 
-main().then( (data) => {
-    fs.writeFileSync("./data.json", JSON.stringify(data, null, '\t')) //remove '/t' to disable pretty print
-});
-
-
+main();
